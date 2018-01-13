@@ -1,0 +1,282 @@
+<template>
+    <el-row type="flex" :gutter="10">
+        <el-col :span="4">
+            <el-card class="box-card">
+                <div slot="header" class="clearfix">
+                    <span>下辖区县</span>
+                </div>
+                <el-tree :data="data" @node-click="handleNodeClick" default-expand-all></el-tree>
+            </el-card>
+            <el-card class="box-card" style="margin-top:15px">
+                <div slot="header" class="clearfix">
+                    <span>畜禽种类</span>
+                </div>
+                <el-tree :data="data2" @node-click="handleNodeClick2" default-expand-all></el-tree>
+            </el-card>
+        </el-col>
+        <el-col :span="20" align="center">
+            <div id="allmap" style="width:100%"></div>
+        </el-col>
+    </el-row>
+</template>
+<script>
+    import selectMenu from 'src/components/select/menu'
+    import {getAreaList} from 'src/service/data'
+    
+    var map = null;
+	var city = 0;
+	var longitude = 113.129508;
+	var latitude = 27.837826;
+	var zoom = 9;
+
+    function init(longitude,latitude,size,cityId,spiceId){
+		var point = new BMap.Point(longitude,latitude);
+		var marker = new BMap.Marker(point);  // 创建标注ע
+		map.addOverlay(marker);
+	}
+    
+    function initMap(){
+        // 百度地图API功能
+        // 创建Map实例
+        map = new BMap.Map("allmap",{enableMapClick:true});
+
+        map.setMapStyle({
+            styleJson:[
+                    {
+                        "featureType": "poi",
+                        "elementType": "all",
+                        "stylers": {
+                            "color": "#ffffff",
+                            "visibility": "off"
+                        }
+                    },
+                    {
+                        "featureType": "road",
+                        "elementType": "all",
+                        "stylers": {
+                            "color": "#ffffff",
+                            "visibility": "off"
+                        }
+                    },
+                    // {
+                    //     "featureType": "background",
+                    //     "elementType": "all",
+                    //     "stylers": {
+                    //             "color": "#ffffff"
+                    //     }
+                    // },
+                    // {
+                    //     "featureType": "administrative",
+                    //     "elementType": "all",
+                    //     "stylers": {
+                    //                 "color": "#ffffff",
+                    //                 "visibility": "off"
+                    //     }
+                    // }
+            ]
+        });
+        // 初始化地图,设置中心点坐标和地图级别
+        map.enableScrollWheelZoom(true);
+        // 设置地图显示的城市 此项是必须设置的
+        map.setCurrentCity("株洲市");
+        // 开启鼠标滚轮缩放      
+        map.enableScrollWheelZoom(true);
+        madeBoundary();
+        getCityInfo('株洲市','',{x:113.350428,y:26.621437,zoom:zoom});
+    }
+
+    //点击展示信息
+    /*--------------展示信息     begin-------------------  */
+    //创建一个Icon
+    function createIcon(json){
+        var icon = new BMap.Icon(
+            "http://59.110.223.81/static2/images/icon_marker.png",
+            new BMap.Size(json.w,json.h),{
+                imageOffset: new BMap.Size(-json.l,-json.t),
+                infoWindowOffset:new BMap.Size(json.lb+5,1),
+                offset:new BMap.Size(json.x,json.h)
+            })
+        return icon;
+    }
+	function makeClickArea(longitude,latitude,farmName,responsiblePerson,responsiblePhone,speciOfLivesAndPoul,livestockScaleNow){
+        var clickPoint = new BMap.Point(longitude,latitude);
+        var icon = createIcon({w:20,h:29,l:0,t:0,x:0,lb:0});
+    	//设置marker图标为水滴
+		var clickMarker = new BMap.Marker(clickPoint,{icon});
+		map.addOverlay(clickMarker);
+		var opts = {
+		  width : 200,     // 信息窗口宽度
+		  height: 200,     // 信息窗口高度
+		  title : farmName, // 信息窗口标题
+		  enableMessage:true,//设置允许信息窗发送短息
+		  message:""
+		}
+		var content = 		
+		"<table class='tableMarker'>"+ 
+			"<tbody>"+
+				"<tr>"+
+					"<th width='43'>农场名称：</th><td colspan='3'>"+farmName+"</td>"+
+				"</tr>"+
+				"<tr>"+
+					"<th>负责人：</th>"+
+					"<td colspan='3'>"+responsiblePerson+"</td>"+
+				"</tr>"+
+				"<tr>"+
+					"<th>负责人电话：</th>"
+					+"<td colspan='3'>"+responsiblePhone+"</td>"+
+				"</tr>"+
+				"<tr>"+
+					"<th>畜禽种类：</th>"+
+					"<td colspan='3'>"+speciOfLivesAndPoul+"</td>"+
+				"</tr>"+
+				"<tr>"+
+					"<th>存栏数量：</th>"+
+					"<td colspan='3'>"+livestockScaleNow+"</td>"+
+				"</tr>"+
+			"</tbody>"+
+		"</table>";
+		var infoWindow = new BMap.InfoWindow(content, opts);  // 创建信息窗口对象 
+		clickMarker.addEventListener("click", function(){          
+			map.openInfoWindow(infoWindow,clickPoint); //开启信息窗口
+        });
+
+        return clickMarker;
+	}
+
+    var cityActive = "";
+    var spiceActive = "";
+    var activeData;
+    function getCityInfo(city,spice,data){
+        cityActive = city;
+        spiceActive = spice;
+        activeData = data;
+        map.centerAndZoom(new BMap.Point(data.x,data.y),activeData.zoom);
+
+        getAreaList({city,spice}).then(data=>{
+            map.clearOverlays()
+            var markers = [];
+            data.map(obj=>{
+                const {longitude,latitude,farmName,responsiblePerson,responsiblePhone,speciOfLivesAndPoul,livestockScaleNow} = obj;
+                let marker = makeClickArea(longitude,latitude,farmName,responsiblePerson,responsiblePhone,speciOfLivesAndPoul,livestockScaleNow);
+                markers.push(marker);
+            })
+        })
+    }
+
+
+    export default {
+        components:{selectMenu},
+        data(){ 
+            return {
+                data: [{
+                    label: '株洲市',x:113.350428,y:27.011437,zoom:9,
+                    children: [
+                        {label: '天元区', x: 113.110428, y: 27.681437,zoom:11},
+                        {label: '芦淞区', x: 113.249403, y: 27.791818,zoom:11},
+                        {label: '石峰区', x: 113.126633, y: 27.880749,zoom:11},
+                        {label: '荷塘区', x: 113.176363, y: 27.863377,zoom:11},
+                        {label: '醴陵市', x: 113.504065, y: 27.65214,zoom:10},
+                        {label: '株洲县', x: 113.104366, y: 27.450509,zoom:10},
+                        {label: '茶陵县', x: 113.553948, y: 26.788747,zoom:10},
+                        {label: '炎陵县', x: 113.765517, y: 26.337897,zoom:10},
+                        {label: '攸县', x: 113.356177, y: 27.107317,zoom:10},
+                    ]
+                }],
+                data2: [{
+                    label: '畜禽种类',
+                    children: [
+                        {label: '生猪'},
+                        {label: '肉鸡'},
+                        {label: '蛋鹅'},
+                    ]
+                }],
+                
+            }
+        },
+        mounted(){
+            initMap();
+        },
+        methods:{
+            handleNodeClick(data){
+                if(activeData === data && map.getZoom() === data.zoom) return; 
+                getCityInfo(data.label,spiceActive,data)
+            },
+            handleNodeClick2(data){
+                getCityInfo(cityActive,data.label === '畜禽种类'?'':data.label,activeData)
+            }
+        }
+    }
+
+	/*---------------展示信息    end  */
+	
+     function madeBoundary() {
+    	getBoundary("天元区","#dfe6f1")
+    	getBoundary("芦淞区","#C8C1E3")
+    	getBoundary("荷塘区","#FBC5DC")
+    	getBoundary("石峰区","#DBEDC7")
+    	getBoundary("醴陵市","#E7CCAF")
+    	getBoundary("株洲市","#dfe6f1")
+    	getBoundary("株洲县","#C8C1E3")
+    	getBoundary("攸县","#FBC5DC")
+    	getBoundary("茶陵县","#DBEDC7")
+    	getBoundary("炎陵县","#E7CCAF")
+     	function getBoundary(name,color){
+	    var bdary = new BMap.Boundary();
+		    bdary.get(name, function(rs){
+		        var count = rs.boundaries.length; 
+		        for(var i = 0; i < count; i++){
+					//创建多边形覆盖物
+		            var ply = new BMap.Polygon(rs.boundaries[i], {strokeWeight: 1, strokeColor: "#4ba700",FillOpacity:0});
+                    //禁止覆盖物在 map.clearOverlays 方法中被清除。
+                    ply.disableMassClear()
+                    //设置多边形的填充颜色
+					ply.setFillColor(color);
+					//设置多边形的透明度
+					ply.setFillOpacity("0.5");
+					//全景场景内添加覆盖物
+		            map.addOverlay(ply);  
+		        }
+		    });   
+		}
+    }
+
+</script>
+<style lang="scss">
+#allmap{
+    height: 100vh;
+    .anchorBL,.BMap_cpyCtrl{
+        display: none;
+    }
+}
+.el-tree-node.is-current{
+    >.el-tree-node__content{
+        background: #ececec;
+        color:#4BA700
+    }
+} 
+.tableMarker {
+		border: 0px;
+		border-collapse: collapse;
+		vertical-align: top;
+        width: 420px;
+        margin: 20px;
+		margin-bottom: 10px;
+        /*background-color: rgba(185, 217, 247, 1);*/
+	}
+
+    th {
+        font-size: 16px;
+        white-space: nowrap;
+        text-align: right;
+        width: 100px;
+        font-weight: 500;
+    }
+    td {
+        font-size: 13.6px;
+        text-align: left;
+        /*font-weight: 300;*/
+    }
+
+</style>
+
+

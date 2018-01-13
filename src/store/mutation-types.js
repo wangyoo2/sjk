@@ -1,0 +1,5 @@
+export const RECORD_USERINFO = 'RECORD_USERINFO'
+export const INIT_USERINFO = 'INIT_USERINFO'
+export const USER_LOGOUT = 'USER_LOGOUT'
+export const GET_MENU_LIST = 'GET_MENU_LIST'
+export const GET_CUR_MENU = 'GET_CUR_MENU'
