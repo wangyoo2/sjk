@@ -22,7 +22,7 @@
 <script>
     import selectMenu from 'src/components/select/menu'
     import {getAreaList} from 'src/service/data'
-    
+
     var map = null;
 	var city = 0;
 	var longitude = 113.129508;
@@ -34,7 +34,7 @@
 		var marker = new BMap.Marker(point);  // 创建标注ע
 		map.addOverlay(marker);
 	}
-    
+
     function initMap(){
         // 百度地图API功能
         // 创建Map实例
@@ -79,7 +79,7 @@
         map.enableScrollWheelZoom(true);
         // 设置地图显示的城市 此项是必须设置的
         map.setCurrentCity("株洲市");
-        // 开启鼠标滚轮缩放      
+        // 开启鼠标滚轮缩放
         map.enableScrollWheelZoom(true);
         madeBoundary();
         getCityInfo('株洲市','',{x:113.350428,y:26.621437,zoom:zoom});
@@ -90,7 +90,7 @@
     //创建一个Icon
     function createIcon(json){
         var icon = new BMap.Icon(
-            "http://59.110.223.81/static2/images/icon_marker.png",
+            "../static/images/icon_marker.png",
             new BMap.Size(json.w,json.h),{
                 imageOffset: new BMap.Size(-json.l,-json.t),
                 infoWindowOffset:new BMap.Size(json.lb+5,1),
@@ -111,8 +111,8 @@
 		  enableMessage:true,//设置允许信息窗发送短息
 		  message:""
 		}
-		var content = 		
-		"<table class='tableMarker'>"+ 
+		var content =
+		"<table class='tableMarker'>"+
 			"<tbody>"+
 				"<tr>"+
 					"<th width='43'>农场名称：</th><td colspan='3'>"+obj.farmName+"</td>"+
@@ -135,8 +135,8 @@
 				"</tr>"+
 			"</tbody>"+
 		"</table>";
-		var infoWindow = new BMap.InfoWindow(content, opts);  // 创建信息窗口对象 
-		clickMarker.addEventListener("click", function(){          
+		var infoWindow = new BMap.InfoWindow(content, opts);  // 创建信息窗口对象
+		clickMarker.addEventListener("click", function(){
 			map.openInfoWindow(infoWindow,clickPoint); //开启信息窗口
         });
 
@@ -165,7 +165,7 @@
 
     export default {
         components:{selectMenu},
-        data(){ 
+        data(){
             return {
                 data: [{
                     label: '株洲市',x:113.350428,y:27.011437,zoom:9,
@@ -189,7 +189,7 @@
                         {label: '蛋鹅'},
                     ]
                 }],
-                
+
             }
         },
         mounted(){
@@ -197,7 +197,7 @@
         },
         methods:{
             handleNodeClick(data){
-                if(activeData === data && map.getZoom() === data.zoom) return; 
+                if(activeData === data && map.getZoom() === data.zoom) return;
                 getCityInfo(data.label,spiceActive,data)
             },
             handleNodeClick2(data){
@@ -207,7 +207,7 @@
     }
 
 	/*---------------展示信息    end  */
-	
+
      function madeBoundary() {
     	getBoundary("天元区","#dfe6f1")
     	getBoundary("芦淞区","#C8C1E3")
@@ -222,7 +222,7 @@
      	function getBoundary(name,color){
 	    var bdary = new BMap.Boundary();
 		    bdary.get(name, function(rs){
-		        var count = rs.boundaries.length; 
+		        var count = rs.boundaries.length;
 		        for(var i = 0; i < count; i++){
 					//创建多边形覆盖物
 		            var ply = new BMap.Polygon(rs.boundaries[i], {strokeWeight: 1, strokeColor: "#4ba700",FillOpacity:0});
@@ -233,9 +233,9 @@
 					//设置多边形的透明度
 					ply.setFillOpacity("0.5");
 					//全景场景内添加覆盖物
-		            map.addOverlay(ply);  
+		            map.addOverlay(ply);
 		        }
-		    });   
+		    });
 		}
     }
 
@@ -252,7 +252,7 @@
         background: #ececec;
         color:#4BA700
     }
-} 
+}
 .tableMarker {
 		border: 0px;
 		border-collapse: collapse;
